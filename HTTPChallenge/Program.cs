@@ -4,8 +4,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using IronWebScraper;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.IO;
+using System.Text;
 
 namespace HTTPChallenge
 {
@@ -13,6 +15,7 @@ namespace HTTPChallenge
     {
         static async Task Main(string[] args)
         {
+
 
             //    var result = await Employees.employeesData();
 
@@ -87,8 +90,21 @@ namespace HTTPChallenge
 
             // Console.WriteLine(await Nomor3.No3());
 
-            // var scrape = new BlogScraper();
-            // await scrape.StartAsync();
+                public static async Task<List<MovieDB>> listTitle()
+            {
+                var client = new HttpClient();
+                var resultAs = await client.GetStringAsync("https://api.themoviedb.org/3/discover/movie?api_key=db924fc45061a07bcb810aa1410e01b8&language=id-ID&sort_by=popularity.asc&include_adult=false&include_video=false&with_original_language=id");
+                var listTitle1 = JsonConvert.DeserializeObject<List<MovieDB>>(resultAs);
+                return listTitle1;
+            }
+
+            //var scrapes = new Kompas.BlogScrapper();
+            //await scrapes.StartAsync();
+
+
+            //var scrape = new CGV();
+            //await scrape.StartAsync();
+
 
         }
     }
@@ -287,61 +303,100 @@ namespace HTTPChallenge
 
         }
 
+    public class Result
+    {
+        public double popularity { get; set; }
+        public int id { get; set; }
+        public bool video { get; set; }
+        public int vote_count { get; set; }
+        public double vote_average { get; set; }
+        public string title { get; set; }
+        public string release_date { get; set; }
+        public string original_language { get; set; }
+        public string original_title { get; set; }
+        public List<int> genre_ids { get; set; }
+        public string backdrop_path { get; set; }
+        public bool adult { get; set; }
+        public string overview { get; set; }
+        public string poster_path { get; set; }
+    }
 
-        //public class MovieDB : WebScraper
-        //{
-        //    public override void Init()
-        //    {
-        //        LoggingLevel = WebScraper.LogLevel.All;
-        //        Request("https://www.themoviedb.org/", Parse);
-        //    }
+        public class MovieDB
+    {
+        public int page { get; set; }
+        public int total_results { get; set; }
+        public int total_pages { get; set; }
+        public List<Result> results { get; set; }
+    }
 
-        //    public override string Parse(Response response)
-        //    {
-        //        foreach (var k in response.Css(""))
-        //        {
-        //            string title = k.TextContentClean;
-        //            return title;
-        //        }
-        //    }
-        //}
+    public class Movie4
+    {
+        public static async Task<string> Indonesia()
+        {
+            var client = new HttpClient();
+            var web = await client.GetStringAsync("https://api.themoviedb.org/3/discover/movie?api_key=db924fc45061a07bcb810aa1410e01b8&language=id-ID&sort_by=popularity.asc&include_adult=false&include_video=false&with_original_language=id");
 
+            var listTitle = new List<string>();
+            var Indonesianmovies = JsonConvert.DeserializeObject<MovieDB>(web);
 
+            foreach(var i in Indonesianmovies.results)
+            {
+                listTitle.Add(i.title);
+            }
 
+            return String.Join(',', listTitle));
 
+        }
 
-        //public class CGV : WebScraper
-        //{
-        //    public override void Init()
-        //    {
-        //        License.LicenseKey = "LicenseKey";
-        //        this.LoggingLevel = WebScraper.LogLevel.All;
-        //        this.WorkingDirectory = AppSetting.GetAppRoot() + @"\MovieSample\Output\";
-        //        this.Request("https://www.cgv.id/en/movies/now_playing/", Parse);
-        //    }
-        //    public override void Parse(Response response)
-        //    {
-        //        foreach (var Divs in response.Css("movie-list-body > div"))
-        //        {
-        //            if (Divs.Attributes["class"] != "clearfix")
-        //            {
-        //                var movie = new Movie();
-        //                var movie.Id = CoDivs.GetAttribute("movie-list-body");
-        //                var link = Divs.Css("a")[0];
-        //                movie.Title = link.TextContentClean;
-        //                movie.URL = link.Attributes["href"];
-        //                Scrape(movie, "Movie.Jsonl");
-        //            }
-        //        }
-        //    }
-        //}
+        
 
-        //public class Movie
-        //{
-        //    public int ID { get; set; }
-        //    public string Title { get; set; }
-        //    public string URL { get; set; }
-        //}
+    }
+            
+        
     
+
+
+    public class CGV : WebScraper
+    {
+
+        public override void Init()
+        {
+
+            this.LoggingLevel = WebScraper.LogLevel.All;
+            this.Request("https://www.cgv.id/en/movies/now_playing/", Parse);
+        }
+
+        public override void Parse(Response response)
+        {
+            foreach (var titleLink in response.Css("ul.slides > li > a"))
+            {
+                string link = titleLink.Attributes["href"];
+                this.Request(link, ParseDetails);
+            }
+            
+        }
+
+        public void ParseDetails(Response response)
+        {
+            string title = response.Css("div.movie-info-title").First().InnerTextClean;
+            Console.WriteLine(title);
+            foreach (var i in response.Css("div.movie-add-info > ul"))
+            {
+                string info = i.InnerText.Replace("\t", "");
+                Console.WriteLine(info);
+            }
+            string synopsis = response.Css("div.movie-synopsis").First().InnerTextClean;
+
+            Console.WriteLine(synopsis);
+
+        }
+    }
+
+   
+
+
+
+
+
 
 }
